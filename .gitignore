@@ -1,8 +1,8 @@
-# Large model files
-*.keras
-*.h5
-*.pkl
-*.joblib
+# Large model files - now tracked with Git LFS
+# *.keras
+# *.h5
+# *.pkl
+# *.joblib
 
 # Python
 __pycache__/
