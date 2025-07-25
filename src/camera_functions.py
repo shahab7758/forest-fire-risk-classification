@@ -4,7 +4,7 @@ from io import BytesIO
 from tensorflow.keras.models import load_model
 
 # Load the model
-model_path = "../analysis/wildfire_detection_model.keras"
+model_path = "analysis/wildfire_detection_model.keras"
 model = load_model(model_path)
 
 # Function to preprocess the image before prediction
