@@ -5,6 +5,7 @@ import requests_cache
 from retry_requests import retry
 from datetime import datetime
 import joblib
+import requests
 
 model = __import__("tensorflow").keras.models.load_model(
     "analysis/meteorological-detection-classification.keras"
@@ -16,6 +17,35 @@ std_scaler = joblib.load("analysis/std_scaler_weather.pkl")
 cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
+
+def get_coordinates_from_location(location_input):
+    """
+    Convert postal code or area name to coordinates using OpenStreetMap Nominatim API
+    """
+    try:
+        # Use OpenStreetMap Nominatim API (free and no API key required)
+        base_url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            "q": location_input,
+            "format": "json",
+            "limit": 1
+        }
+        
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data:
+            lat = float(data[0]["lat"])
+            lon = float(data[0]["lon"])
+            return lat, lon, data[0]["display_name"]
+        else:
+            return None, None, None
+            
+    except Exception as e:
+        print(f"Error getting coordinates: {str(e)}")
+        return None, None, None
 
 
 # Function to fetch weather data from Open-Meteo API

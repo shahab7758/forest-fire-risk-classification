@@ -407,18 +407,48 @@ def show_weather_page():
         st.error("Weather analysis is not available. Please check that all required files are present.")
         return
     
-    st.write("Enter coordinates to analyze weather conditions for wildfire risk assessment.")
+    st.write("Enter a postal code, city name, or area to analyze weather conditions for wildfire risk assessment.")
     
-    col1, col2 = st.columns(2)
+    # Location input
+    location_input = st.text_input(
+        "Enter location (e.g., 'San Francisco, CA', '90210', 'London, UK')",
+        placeholder="Enter postal code, city, or area name",
+        help="You can enter postal codes, city names, or general area descriptions"
+    )
     
-    with col1:
-        latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0, value=37.7749, format="%.4f", key="weather_lat")
-        longitude = st.number_input("Longitude", min_value=-180.0, max_value=180.0, value=-122.4194, format="%.4f", key="weather_lon")
+    # Manual coordinates option
+    use_manual_coords = st.checkbox("Use manual coordinates instead")
+    
+    if use_manual_coords:
+        col1, col2 = st.columns(2)
+        with col1:
+            latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0, value=37.7749, format="%.4f", key="weather_lat")
+        with col2:
+            longitude = st.number_input("Longitude", min_value=-180.0, max_value=180.0, value=-122.4194, format="%.4f", key="weather_lon")
+    else:
+        latitude = longitude = None
     
     if st.button("Analyze Weather Data", type="primary"):
         with st.spinner("Analyzing weather data..."):
             try:
-                from meteorological_functions import weather_data_predict
+                from meteorological_functions import weather_data_predict, get_coordinates_from_location
+                
+                # Get coordinates if not manually entered
+                if not use_manual_coords:
+                    if not location_input:
+                        st.error("Please enter a location or enable manual coordinates.")
+                        return
+                    
+                    st.info(f"Looking up coordinates for: {location_input}")
+                    lat, lon, display_name = get_coordinates_from_location(location_input)
+                    
+                    if lat is None or lon is None:
+                        st.error(f"Could not find coordinates for '{location_input}'. Please try a different location or use manual coordinates.")
+                        return
+                    
+                    latitude, longitude = lat, lon
+                    st.success(f"Found location: {display_name}")
+                    st.info(f"Coordinates: {latitude:.4f}, {longitude:.4f}")
                 
                 # Get weather prediction
                 prediction = weather_data_predict(latitude, longitude)
@@ -448,7 +478,10 @@ def show_weather_page():
                     """, unsafe_allow_html=True)
                 
                 with col2:
-                    st.subheader("Weather Metrics")
+                    st.subheader("Location Details")
+                    if not use_manual_coords:
+                        st.write(f"**Location:** {display_name}")
+                    st.write(f"**Coordinates:** {latitude:.4f}, {longitude:.4f}")
                     st.info("Weather data analysis completed successfully.")
                 
                 # Save to database
@@ -470,7 +503,8 @@ def show_weather_page():
                     if st.button("Send Alert Email", key="weather_alert"):
                         try:
                             from email_alert import send_alert_email
-                            send_alert_email(latitude, longitude, prediction, "Weather Analysis")
+                            location_desc = display_name if not use_manual_coords else f"Coordinates: {latitude:.4f}, {longitude:.4f}"
+                            send_alert_email(latitude, longitude, prediction, f"Weather Analysis - {location_desc}")
                             st.success("Alert email sent successfully!")
                         except Exception as e:
                             st.error(f"Failed to send alert: {str(e)}")
