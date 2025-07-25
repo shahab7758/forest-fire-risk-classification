@@ -15,11 +15,13 @@ def preprocess_image(img):
 
     return np.expand_dims(img_array, axis=0)
 
-
-
 # Function to predict wildfire probability using camera image
 def camera_cnn_predict(image_file):
-    image = Image.open(BytesIO(image_file.read())).convert("RGB")
+    # Reset file pointer to beginning
+    image_file.seek(0)
+    
+    # Open and convert image
+    image = Image.open(image_file).convert("RGB")
     preprocessed_image = preprocess_image(image)
     prediction = model.predict(preprocessed_image)[0][0]
 

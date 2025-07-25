@@ -16,6 +16,48 @@ def fetch_alerts():
     conn.close()
     return records
 
+# Send alert email function for Streamlit app
+def send_alert_email(latitude, longitude, prediction, method):
+    """Send alert email for high-risk detections"""
+    try:
+        mailer = emails.NewEmail(
+            os.getenv("MAILERSEND_KEY")
+        )
+
+        mail_from = {
+            "name": "Wildfire Alerts",
+            "email": "alerts@trial-k68zxl21dwm4j905.mlsender.net",
+        }
+
+        # For now, send to a default email (you can modify this)
+        recipients = [{"email": "admin@example.com"}]
+
+        mail_body = {}
+        mailer.set_mail_from(mail_from, mail_body)
+        mailer.set_mail_to(recipients, mail_body)
+        mailer.set_subject(f"High Risk Wildfire Alert - {method}", mail_body)
+        
+        # Create simple HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <body>
+            <h2>High Risk Wildfire Alert</h2>
+            <p><strong>Method:</strong> {method}</p>
+            <p><strong>Location:</strong> {latitude}, {longitude}</p>
+            <p><strong>Risk Probability:</strong> {prediction:.2%}</p>
+            <p>Please take immediate action to assess the situation.</p>
+        </body>
+        </html>
+        """
+        
+        mailer.set_html_content(html_content, mail_body)
+        response = mailer.send(mail_body)
+        print(f"Alert email sent with response: {response}")
+        return True
+    except Exception as e:
+        print(f"Failed to send alert email: {str(e)}")
+        return False
 
 
 # Perform predictions and generate a report
