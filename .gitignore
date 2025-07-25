@@ -63,10 +63,5 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
-# Large model files (exceed GitHub limits)
-*.keras
-*.pkl
-analysis/wildfire_satellite_detection_model.keras
-analysis/wildfire_detection_model.keras
-analysis/meteorological-detection-classification.keras
-analysis/std_scaler_weather.pkl 
+# Note: Model files are now handled by Git LFS
+# *.keras and *.pkl files are tracked by .gitattributes 
